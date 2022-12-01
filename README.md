@@ -1,4 +1,4 @@
-Simple executable wrapper that sets defaults variables, with original names in `ps aux` / `top` names.
+Simple executable wrapper that sets defaults variables, with original names in `ps aux` / `top`.
 
 Build example with
 ```
