@@ -5,25 +5,25 @@
 #include <unistd.h>
 
 typedef enum {
-  parser_token_start,
-  parser_identifier,
-  parser_string_end,
-  parser_comment,
-  identifier_or_delimited_string_quote,
-  parser_delimited_string_start,
-  parser_inline_delimited_string,
-  parser_inline_delimited_string_end,
+  lexer_token_start,
+  lexer_identifier,
+  lexer_string_end,
+  lexer_comment,
+  lexer_identifier_or_delimited_string_quote,
+  lexer_delimited_string_start,
+  lexer_inline_delimited_string,
+  lexer_inline_delimited_string_end,
 } state_t;
 
 typedef enum {
-  identifier,
-  string,
-  end_of_command,
-  end_of_file,
-  fatal_error,
+  token_identifier,
+  token_string,
+  token_end_of_command,
+  token_end_of_file,
+  token_fatal_error,
 } token_t;
 
-struct parser_t {
+struct lexer_t {
   state_t state;
   char closing_delimiter;
   size_t token_start;
@@ -36,260 +36,260 @@ struct parser_t {
   token_t token;
 };
 
-static void init_parser(struct parser_t *p) {
-  p->state = parser_token_start;
+static void init_lexer(struct lexer_t *p) {
+  p->state = lexer_token_start;
   p->index = 0;
   p->end_of_file = 0;
 }
 
-static void next_token(struct parser_t *parser, char *input, size_t n) {
+static void next_token(struct lexer_t *lexer, char *input, size_t n) {
   while (1) {
     char c;
-    if (parser->index < n) {
-      c = input[parser->index];
+    if (lexer->index < n) {
+      c = input[lexer->index];
     } else {
-      parser->end_of_file = 1;
+      lexer->end_of_file = 1;
     }
 
-    switch (parser->state) {
+    switch (lexer->state) {
 
-    case parser_token_start: {
-      if (parser->end_of_file) {
-        parser->token = end_of_file;
+    case lexer_token_start: {
+      if (lexer->end_of_file) {
+        lexer->token = token_end_of_file;
         return;
       }
 
       // Ignore comments
       if (c == '#') {
-        parser->state = parser_comment;
-        ++parser->index;
+        lexer->state = lexer_comment;
+        ++lexer->index;
         continue;
       }
 
       // Begin of a string
       if (c == '"') {
-        parser->state = parser_string_end;
-        parser->token_start = parser->index + 1;
-        ++parser->index;
+        lexer->state = lexer_string_end;
+        lexer->token_start = lexer->index + 1;
+        ++lexer->index;
         continue;
       }
 
       // Either the start of a string r"(...)" or just an identifier.
       if (c == 'r') {
-        parser->state = identifier_or_delimited_string_quote;
-        parser->token_start = parser->index;
-        ++parser->index;
+        lexer->state = lexer_identifier_or_delimited_string_quote;
+        lexer->token_start = lexer->index;
+        ++lexer->index;
         continue;
       }
 
       // End of a command
       if (c == '\n') {
-        ++parser->index;
-        parser->token = end_of_command;
+        ++lexer->index;
+        lexer->token = token_end_of_command;
         return;
       }
 
       // Ignore whitespace
       if (isspace(c)) {
-        ++parser->index;
+        ++lexer->index;
         continue;
       }
 
       // Anything else is valid identifier
-      parser->state = parser_identifier;
-      parser->token_start = parser->index;
-      ++parser->index;
+      lexer->state = lexer_identifier;
+      lexer->token_start = lexer->index;
+      ++lexer->index;
       break;
     }
 
-    case parser_identifier: {
+    case lexer_identifier: {
       // emit end of identifier
-      if (parser->end_of_file || c == '\n') {
-        parser->token = identifier;
-        parser->state = parser_token_start;
-        parser->token_end = parser->index;
+      if (lexer->end_of_file || c == '\n') {
+        lexer->token = token_identifier;
+        lexer->state = lexer_token_start;
+        lexer->token_end = lexer->index;
         return;
       }
 
       // emit identifier and step
       if (isspace(c)) {
-        parser->token = identifier;
-        parser->state = parser_token_start;
-        parser->token_end = parser->index;
-        ++parser->index;
+        lexer->token = token_identifier;
+        lexer->state = lexer_token_start;
+        lexer->token_end = lexer->index;
+        ++lexer->index;
         return;
       }
 
       // part of the identifier
-      ++parser->index;
+      ++lexer->index;
       break;
     }
 
-    case parser_comment: {
+    case lexer_comment: {
       // comment end
-      if (parser->end_of_file) {
-        parser->token = end_of_file;
+      if (lexer->end_of_file) {
+        lexer->token = token_end_of_file;
         return;
       }
 
       // comment end
       if (c == '\n') {
-        parser->token = end_of_command;
-        parser->state = parser_token_start;
-        ++parser->index;
+        lexer->token = token_end_of_command;
+        lexer->state = lexer_token_start;
+        ++lexer->index;
         return;
       }
 
       // consume comment
-      ++parser->index;
+      ++lexer->index;
       break;
     }
 
-    case parser_string_end: {
+    case lexer_string_end: {
       // unexpected end of file
-      if (parser->end_of_file) {
+      if (lexer->end_of_file) {
         puts("Unexpected end of file while parsing string\n");
-        parser->token = fatal_error;
+        lexer->token = token_fatal_error;
         return;
       }
 
       if (c == '"') {
-        parser->state = parser_token_start;
-        parser->token = string;
-        parser->token_end = parser->index;
-        ++parser->index;
+        lexer->state = lexer_token_start;
+        lexer->token = token_string;
+        lexer->token_end = lexer->index;
+        ++lexer->index;
         return;
       }
 
       // string continues;
-      ++parser->index;
+      ++lexer->index;
       break;
     }
 
-    case identifier_or_delimited_string_quote: {
+    case lexer_identifier_or_delimited_string_quote: {
       // end of an identifier
-      if (parser->end_of_file || c == '\n') {
-        parser->state = parser_token_start;
-        parser->token = identifier;
-        parser->token_end = parser->index;
+      if (lexer->end_of_file || c == '\n') {
+        lexer->state = lexer_token_start;
+        lexer->token = token_identifier;
+        lexer->token_end = lexer->index;
         return;
       }
 
       // end of identifier
       if (isspace(c)) {
-        parser->state = parser_token_start;
-        parser->token = identifier;
-        parser->token_end = parser->index;
-        ++parser->index;
+        lexer->state = lexer_token_start;
+        lexer->token = token_identifier;
+        lexer->token_end = lexer->index;
+        ++lexer->index;
         return;
       }
 
       // begin of r"(...)" delimited string
       if (c == '"') {
-        parser->state = parser_delimited_string_start;
-        parser->heredoc_size = 0;
-        parser->heredoc_start = parser->index + 1;
-        ++parser->index;
+        lexer->state = lexer_delimited_string_start;
+        lexer->heredoc_size = 0;
+        lexer->heredoc_start = lexer->index + 1;
+        ++lexer->index;
         continue;
       }
 
       // identifier
-      parser->state = parser_identifier;
-      ++parser->index;
+      lexer->state = lexer_identifier;
+      ++lexer->index;
       break;
     }
 
-    case parser_delimited_string_start: {
+    case lexer_delimited_string_start: {
       // unexpected end of file
-      if (parser->end_of_file) {
+      if (lexer->end_of_file) {
         puts("Unexpected end of file while parsing delimited string\n");
-        parser->token = fatal_error;
+        lexer->token = token_fatal_error;
         return;
       }
 
       // parse r"{...
       if (c == '{' || c == '[' || c == '(' || c == '<') {
-        parser->state = parser_inline_delimited_string;
-        parser->closing_delimiter = c == '{' ? '}' : c == '[' ? ']' : c == '(' ? ')' : '>';
-        parser->token_start = parser->index + 1;
-        ++parser->index;
+        lexer->state = lexer_inline_delimited_string;
+        lexer->closing_delimiter = c == '{' ? '}' : c == '[' ? ']' : c == '(' ? ')' : '>';
+        lexer->token_start = lexer->index + 1;
+        ++lexer->index;
         continue;
       }
 
-      ++parser->heredoc_size;
-      ++parser->index;
+      ++lexer->heredoc_size;
+      ++lexer->index;
       continue;
     }
 
-    case parser_inline_delimited_string: {
+    case lexer_inline_delimited_string: {
       // unexpected end of file
-      if (parser->end_of_file) {
+      if (lexer->end_of_file) {
         puts("Unexpected end of file while parsing delimited string\n");
-        parser->token = fatal_error;
+        lexer->token = token_fatal_error;
         return;
       }
 
       // closing delimiter
-      if (c == parser->closing_delimiter) {
-        parser->state = parser_inline_delimited_string_end;
-        parser->heredoc_pos = 0;
-        parser->token_end = parser->index;
-        ++parser->index;
+      if (c == lexer->closing_delimiter) {
+        lexer->state = lexer_inline_delimited_string_end;
+        lexer->heredoc_pos = 0;
+        lexer->token_end = lexer->index;
+        ++lexer->index;
         continue;
       }
 
-      ++parser->index;
+      ++lexer->index;
       break;
     }
 
-    case parser_inline_delimited_string_end: {
-      if (parser->end_of_file) {
+    case lexer_inline_delimited_string_end: {
+      if (lexer->end_of_file) {
         puts("Unexpected end of file while parsing delimited string");
-        parser->token = fatal_error;
+        lexer->token = token_fatal_error;
         return;
       }
 
 
-      if (parser->heredoc_pos < parser->heredoc_size) {
+      if (lexer->heredoc_pos < lexer->heredoc_size) {
         // Matching heredoc character first.
-        if (c == input[parser->heredoc_start + parser->heredoc_pos]) {
-          ++parser->heredoc_pos;
-          ++parser->index;
+        if (c == input[lexer->heredoc_start + lexer->heredoc_pos]) {
+          ++lexer->heredoc_pos;
+          ++lexer->index;
           continue;
         }
 
         // Mismatch! Reset heredoc pos.
-        parser->heredoc_pos = 0;
+        lexer->heredoc_pos = 0;
 
         // Are we again in string closing mode
-        if (c == parser->closing_delimiter) {
-          ++parser->index;
+        if (c == lexer->closing_delimiter) {
+          ++lexer->index;
           continue;
         }
 
         // If not, it's string territory.
-        parser->state = parser_inline_delimited_string;
-        ++parser->index;
+        lexer->state = lexer_inline_delimited_string;
+        ++lexer->index;
         continue;
       }
 
       // Finished the heredoc
       if (c == '"') {
-        parser->state = parser_token_start;
-        parser->token = string;
-        ++parser->index;
+        lexer->state = lexer_token_start;
+        lexer->token = token_string;
+        ++lexer->index;
         return;
       }
 
       // Repeated closing character, maybe the next one ends the string.
-      if (c == parser->closing_delimiter) {
-        ++parser->index;
+      if (c == lexer->closing_delimiter) {
+        ++lexer->index;
         continue;
       }
 
       // still a string.
-      parser->state = parser_inline_delimited_string;
-      ++parser->index;
+      lexer->state = lexer_inline_delimited_string;
+      ++lexer->index;
       break;
     }
     }
@@ -333,51 +333,51 @@ static int execute(char *program, size_t n) {
   size_t value_len;
   size_t new_len;
 
-  struct parser_t parser;
-  init_parser(&parser);
+  struct lexer_t lexer;
+  init_lexer(&lexer);
 
   while (1) {
     // Parse a new command.
-    next_token(&parser, program, n);
+    next_token(&lexer, program, n);
 
-    if (parser.token == fatal_error)
+    if (lexer.token == token_fatal_error)
       return 1;
 
-    if (parser.token == end_of_file)
+    if (lexer.token == token_end_of_file)
       return 0;
 
     // Skip over lines without commands
-    if (parser.token == end_of_command)
+    if (lexer.token == token_end_of_command)
       continue;
     
     // Commands are identifiers
-    if (parser.token != identifier) {
-      printf("Expected a command got %d\n", parser.token);
+    if (lexer.token != token_identifier) {
+      printf("Expected a command got %d\n", lexer.token);
       return 1;
     }
 
     // Identifier should be a command
     command_name_t cmd =
-        parse_command(program + parser.token_start, program + parser.token_end);
+        parse_command(program + lexer.token_start, program + lexer.token_end);
     switch (cmd) {
     case command_append:
-      next_token(&parser, program, n);
-      if (parser.token != identifier && parser.token != string)
+      next_token(&lexer, program, n);
+      if (lexer.token != token_identifier && lexer.token != token_string)
         return 1;
-      variable_start = program + parser.token_start;
-      variable_end = program + parser.token_end;
-      next_token(&parser, program, n);
-      if (parser.token != identifier && parser.token != string)
+      variable_start = program + lexer.token_start;
+      variable_end = program + lexer.token_end;
+      next_token(&lexer, program, n);
+      if (lexer.token != token_identifier && lexer.token != token_string)
         return 1;
-      delim_start = program + parser.token_start;
-      delim_end = program + parser.token_end;
-      next_token(&parser, program, n);
-      if (parser.token != identifier && parser.token != string)
+      delim_start = program + lexer.token_start;
+      delim_end = program + lexer.token_end;
+      next_token(&lexer, program, n);
+      if (lexer.token != token_identifier && lexer.token != token_string)
         return 1;
-      value_start = program + parser.token_start;
-      value_end = program + parser.token_end;
-      next_token(&parser, program, n);
-      if (parser.token != end_of_command && parser.token != end_of_file)
+      value_start = program + lexer.token_start;
+      value_end = program + lexer.token_end;
+      next_token(&lexer, program, n);
+      if (lexer.token != token_end_of_command && lexer.token != token_end_of_file)
         return 1;
 
       // temporarily put some 0 there.
@@ -415,23 +415,23 @@ static int execute(char *program, size_t n) {
       break;
 
     case command_prepend:
-      next_token(&parser, program, n);
-      if (parser.token != identifier && parser.token != string)
+      next_token(&lexer, program, n);
+      if (lexer.token != token_identifier && lexer.token != token_string)
         return 1;
-      variable_start = program + parser.token_start;
-      variable_end = program + parser.token_end;
-      next_token(&parser, program, n);
-      if (parser.token != identifier && parser.token != string)
+      variable_start = program + lexer.token_start;
+      variable_end = program + lexer.token_end;
+      next_token(&lexer, program, n);
+      if (lexer.token != token_identifier && lexer.token != token_string)
         return 1;
-      delim_start = program + parser.token_start;
-      delim_end = program + parser.token_end;
-      next_token(&parser, program, n);
-      if (parser.token != identifier && parser.token != string)
+      delim_start = program + lexer.token_start;
+      delim_end = program + lexer.token_end;
+      next_token(&lexer, program, n);
+      if (lexer.token != token_identifier && lexer.token != token_string)
         return 1;
-      value_start = program + parser.token_start;
-      value_end = program + parser.token_end;
-      next_token(&parser, program, n);
-      if (parser.token != end_of_command && parser.token != end_of_file)
+      value_start = program + lexer.token_start;
+      value_end = program + lexer.token_end;
+      next_token(&lexer, program, n);
+      if (lexer.token != token_end_of_command && lexer.token != token_end_of_file)
         return 1;
 
       // temporarily put some 0 there.
@@ -469,18 +469,18 @@ static int execute(char *program, size_t n) {
       break;
 
     case command_set:
-      next_token(&parser, program, n);
-      if (parser.token != identifier && parser.token != string)
+      next_token(&lexer, program, n);
+      if (lexer.token != token_identifier && lexer.token != token_string)
         return 1;
-      variable_start = program + parser.token_start;
-      variable_end = program + parser.token_end;
-      next_token(&parser, program, n);
-      if (parser.token != identifier && parser.token != string)
+      variable_start = program + lexer.token_start;
+      variable_end = program + lexer.token_end;
+      next_token(&lexer, program, n);
+      if (lexer.token != token_identifier && lexer.token != token_string)
         return 1;
-      value_start = program + parser.token_start;
-      value_end = program + parser.token_end;
-      next_token(&parser, program, n);
-      if (parser.token != end_of_command && parser.token != end_of_file)
+      value_start = program + lexer.token_start;
+      value_end = program + lexer.token_end;
+      next_token(&lexer, program, n);
+      if (lexer.token != token_end_of_command && lexer.token != token_end_of_file)
         return 1;
 
       old_variable_end = *variable_end;
