@@ -64,22 +64,30 @@ append <variable name> <delimiter> <value>
 prepend <variable name> <delimiter> <value>
 ```
 
+Variables, delimiters and values are **strings**.
+
 Inline comments are supported with `# <comment>`.
 
-Variables, delimiters and values can be (a) literal values separated by whitespace:
+### String types
+
+Strings are **always** raw and there is no such
+thing as an escape character.
+
+The simplest type of string is a *literal string*,
+which is always separated by whitespace.
 
 ```
 set VARIABLE VALUE  # VARIABLE is set to `VALUE`
 set VARIABLE he"llo # VARIABLE is set to `he"llo`
 ```
 
-or (b) quoted strings:
+Then there are *quoted strings* using double quotes:
 
 ```
 set "VARIABLE" "VALUE" # VARIABLE is set to `VALUE`
 ```
 
-or (c) delimited strings:
+And finally there are *delimited* strings:
 
 ```
 set r"(VARIABLE)" r"(xyz)"         # VARIABLE is set to `xyz`
@@ -96,9 +104,12 @@ set VARIABLE r"✌️(value)✌️"                   # set VARIABLE to `value`
 set DELIMITERS r"test{)", ]", }", >"}test"  # set DELIMITERS to `)", ]", }", >"`
 ```
 
-the heredoc delimiter can be any length and contain any byte but `(`, `[`, `{` and `<`,
+The heredoc delimiter can be any length and contain any byte but `(`, `[`, `{` and `<`.
 
-Multiline values require quoted or delimited strings:
+### Multiline strings
+
+In quoted and delimited strings new line characters are literal too, and
+can be used to create multiline strings:
 
 ```
 set VARIABLE "the
