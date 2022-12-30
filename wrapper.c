@@ -283,8 +283,6 @@ static void next_token(struct parser_t *parser, char *input, size_t n) {
           continue;
         }
 
-        puts("hello");
-
         // Mismatch! Reset heredoc pos.
         parser->heredoc_pos = 0;
 
