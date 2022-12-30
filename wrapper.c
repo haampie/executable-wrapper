@@ -393,6 +393,7 @@ static int execute(char *program, size_t n) {
         value_len = value_end - value_start;
         new_len = old_len + delim_len + value_len;
         char *concatenated = malloc(new_len + 1); // trailing null
+        if (concatenated == NULL) return 1;
         memcpy(concatenated, old_env, old_len);
         memcpy(concatenated + old_len, delim_start, delim_len);
         memcpy(concatenated + old_len + delim_len, value_start,
@@ -449,6 +450,7 @@ static int execute(char *program, size_t n) {
         value_len = value_end - value_start;
         new_len = old_len + delim_len + value_len;
         char *concatenated = malloc(new_len + 1); // trailing null
+        if (concatenated == NULL) return 1;
         memcpy(concatenated, value_start, value_len);
         memcpy(concatenated + value_len, delim_start, delim_len);
         memcpy(concatenated + value_len + delim_len, old_env,
@@ -518,6 +520,7 @@ int main(int argc, char **argv) {
   long fsize = ftell(f);
   fseek(f, 0, SEEK_SET);
   char *str = malloc(fsize + 1);
+  if (str == NULL) return 1;
   fread(str, fsize, 1, f);
   fclose(f);
   str[fsize] = 0;
