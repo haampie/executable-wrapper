@@ -521,7 +521,8 @@ int main(int argc, char **argv) {
   fseek(f, 0, SEEK_SET);
   char *str = malloc(fsize + 1);
   if (str == NULL) return 1;
-  fread(str, fsize, 1, f);
+  size_t num_read = fread(str, fsize, 1, f);
+  if (num_read != fsize) return 1;
   fclose(f);
   str[fsize] = 0;
 
