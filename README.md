@@ -23,7 +23,6 @@ append CMAKE_PREFIX_PATH ; /second/path
 If you run it in a clean environment:
 
 ```
-$ ./cmake --hello --world
 $ env -i PATH=/usr/bin ./cmake --hello --world
 Hello from cmake. Called with:
 ./cmake
