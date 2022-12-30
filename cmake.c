@@ -10,15 +10,24 @@ int main(int argc, char **argv) {
 
     putchar('\n');
 
-    char * foo = getenv("FOO");
-    if (foo) {
-        puts("FOO was set to:");
-        puts(foo);
+    char * path = getenv("PATH");
+    if (path) {
+        puts("PATH was set to:");
+        puts(path);
         putchar('\n');
     } else {
-        puts("FOO was not set");
+        puts("PATH was not set");
     }
 
+
+    char * cmake_prefix_path = getenv("CMAKE_PREFIX_PATH");
+    if (cmake_prefix_path) {
+        puts("CMAKE_PREFIX_PATH was set to:");
+        puts(cmake_prefix_path);
+        putchar('\n');
+    } else {
+        puts("CMAKE_PREFIX_PATH was not set");
+    }
 
     // Read a byte from stdin to halt
     puts("(waiting for stdin before exiting, this gives you time to look at ps aux/top)");
