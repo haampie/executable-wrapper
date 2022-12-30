@@ -29,6 +29,16 @@ int main(int argc, char **argv) {
         puts("CMAKE_PREFIX_PATH was not set");
     }
 
+
+    char * delimiters = getenv("DELIMITERS");
+    if (delimiters) {
+        puts("DELIMITERS was set to:");
+        puts(delimiters);
+        putchar('\n');
+    } else {
+        puts("DELIMITERS was not set");
+    }
+
     // Read a byte from stdin to halt
     puts("(waiting for stdin before exiting, this gives you time to look at ps aux/top)");
     char x;
