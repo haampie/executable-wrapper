@@ -45,8 +45,12 @@ Inline comments are supported with `# <comment>`.
 
 ### String types
 
-Strings are **always** raw and there is no such
-thing as an escape character.
+Strings are **always** raw and there is no such thing as an escape character.
+The reason not to have an escape character is mostly because `\` itself is used
+as a directory separator on some infamous platforms, and it's not uncommon to
+end a string with `\`, which is awkward (in Python you cannot end a raw string
+with a literal backslash, oops!). Performance-wise it's also nice not to have
+escape characters, since it requires fewer copies.
 
 The simplest type of string is a *literal string*,
 which is always separated by whitespace.
