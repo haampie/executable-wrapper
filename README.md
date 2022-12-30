@@ -64,20 +64,34 @@ append <variable name> <delimiter> <value>
 prepend <variable name> <delimiter> <value>
 ```
 
+Inline comments are supported with `# <comment>`.
+
 Variables, delimiters and values can be literal values separated by whitespace:
 
 ```
-set VARIABLE_NAME VALUE
+set VARIABLE VALUE # VARIABLE is set to `VALUE`
 ```
 
 or quoted strings:
 
 ```
-set "VARIABLE_NAME" "VALUE"
+set "VARIABLE" "VALUE" # VARIABLE is set to `VALUE`
 ```
 
 or delimited strings:
 
 ```
-set r"(VARIABLE_NAME)" r"(VALUE)"
+set r"(VARIABLE)" r"(xyz)"         # VARIABLE is set to `xyz`
+set r"(VARIABLE)" r"(the "value")" # VARIABLE is set to `the "value" here`
+set r"(VARIABLE)" r"(((value)))"   # VARIABLE is set to `((value))`
+```
+
+Multiline values require quoted or delimited strings:
+
+```
+set VARIABLE "the
+value"  # VARIABLE is set to `the<newline>value`
+
+set VARIABLE r"(the
+value)"  # VARIABLE is set to `the<newline>value`
 ```
