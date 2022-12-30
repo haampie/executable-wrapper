@@ -19,8 +19,8 @@ prepend PATH : /add/this/path
 append CMAKE_PREFIX_PATH ; /first/path
 append CMAKE_PREFIX_PATH ; /second/path
 append CMAKE_PREFIX_PATH ; r"(/this/"path"/here)"
-append CMAKE_PREFIX_PATH ; r"hello(/third/path)hello"
-set DELIMITERS r"test()", ]", }", >")test"
+append CMAKE_PREFIX_PATH ; r"_____(/third/path)_____"
+set DELIMITERS r"EOS[)", ]", }", >"]EOS"
 ```
 
 If you run it in a clean environment:
