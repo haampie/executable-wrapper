@@ -69,8 +69,8 @@ Inline comments are supported with `# <comment>`.
 Variables, delimiters and values can be (a) literal values separated by whitespace:
 
 ```
-set VARIABLE VALUE # VARIABLE is set to `VALUE`
-set VARIABLE he"llo # VARAIBLE is set to `he"llo`
+set VARIABLE VALUE  # VARIABLE is set to `VALUE`
+set VARIABLE he"llo # VARIABLE is set to `he"llo`
 ```
 
 or (b) quoted strings:
