@@ -1,3 +1,15 @@
+CFLAGS ?= -Os -Wall -Wextra -Wshadow -pedantic
+EXECUTABLE_WRAPPER_CFLAGS = -std=c99
+LDFLAGS ?=
+
+all: executable-wrapper
+
+executable-wrapper.o: executable-wrapper.c
+	$(CC) $(CFLAGS) $(EXECUTABLE_WRAPPER_CFLAGS) -c -o $@ $<
+
+executable-wrapper: executable-wrapper.o
+	$(CC) $(LDFLAGS) -o $@ $<
+
 cmake: wrapper cmake-real
 	echo "#!$(CURDIR)/$<" > $@
 	echo "set FOO BAR" >> $@
@@ -12,8 +24,5 @@ cmake: wrapper cmake-real
 cmake-real: cmake.c
 	$(CC) -o $@ $<
 
-wrapper: wrapper.c
-	$(CC) -Os -Wl,-s -o $@ $<
-
 clean:
-	rm cmake-real wrapper cmake
+	rm -f executable-wrapper.o executable-wrapper

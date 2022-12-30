@@ -8,22 +8,19 @@ typedef enum {
   parser_token_start,
   parser_identifier,
   parser_string_end,
-  parser_end_of_file,
   parser_comment,
-  parser_error,
   identifier_or_delimited_string_quote,
   parser_delimited_string_start,
   parser_inline_delimited_string,
   parser_inline_delimited_string_end,
-  parser_heredoc_like_string_start
 } state_t;
 
 typedef enum {
-  nothing,
   identifier,
   string,
   end_of_command,
-  stop,
+  end_of_file,
+  fatal_error,
 } token_t;
 
 struct parser_t {
@@ -58,17 +55,15 @@ static void next_token(struct parser_t *parser, char *input, size_t n) {
 
     case parser_token_start: {
       if (parser->end_of_file) {
-        parser->state = parser_end_of_file;
-        parser->token = stop;
+        parser->token = end_of_file;
         return;
       }
 
       // Ignore comments
       if (c == '#') {
-        parser->token = end_of_command;
         parser->state = parser_comment;
         ++parser->index;
-        return;
+        continue;
       }
 
       // Begin of a string
@@ -133,15 +128,16 @@ static void next_token(struct parser_t *parser, char *input, size_t n) {
     case parser_comment: {
       // comment end
       if (parser->end_of_file) {
-        parser->state = parser_end_of_file;
-        continue;
+        parser->token = end_of_file;
+        return;
       }
 
       // comment end
       if (c == '\n') {
+        parser->token = end_of_command;
         parser->state = parser_token_start;
         ++parser->index;
-        continue;
+        return;
       }
 
       // consume comment
@@ -152,8 +148,8 @@ static void next_token(struct parser_t *parser, char *input, size_t n) {
     case parser_string_end: {
       // unexpected end of file
       if (parser->end_of_file) {
-        parser->state = parser_error;
-        parser->token = stop;
+        puts("Unexpected end of file while parsing string\n");
+        parser->token = fatal_error;
         return;
       }
 
@@ -206,39 +202,15 @@ static void next_token(struct parser_t *parser, char *input, size_t n) {
     case parser_delimited_string_start: {
       // unexpected end of file
       if (parser->end_of_file) {
-        parser->state = parser_error;
-        parser->token = stop;
+        puts("Unexpected end of file while parsing delimited string\n");
+        parser->token = fatal_error;
         return;
       }
 
       // parse r"{...
-      if (c == '{') {
+      if (c == '{' || c == '[' || c == '(' || c == '<') {
         parser->state = parser_inline_delimited_string;
-        parser->closing_delimiter = '}';
-        parser->token_start = parser->index + 1;
-        ++parser->index;
-        continue;
-      }
-
-      if (c == '[') {
-        parser->state = parser_inline_delimited_string;
-        parser->closing_delimiter = ']';
-        parser->token_start = parser->index + 1;
-        ++parser->index;
-        continue;
-      }
-
-      if (c == '<') {
-        parser->state = parser_inline_delimited_string;
-        parser->closing_delimiter = '>';
-        parser->token_start = parser->index + 1;
-        ++parser->index;
-        continue;
-      }
-
-      if (c == '(') {
-        parser->state = parser_inline_delimited_string;
-        parser->closing_delimiter = ')';
+        parser->closing_delimiter = c == '{' ? '}' : c == '[' ? ']' : c == '(' ? ')' : '>';
         parser->token_start = parser->index + 1;
         ++parser->index;
         continue;
@@ -252,8 +224,8 @@ static void next_token(struct parser_t *parser, char *input, size_t n) {
     case parser_inline_delimited_string: {
       // unexpected end of file
       if (parser->end_of_file) {
-        parser->state = parser_error;
-        parser->token = stop;
+        puts("Unexpected end of file while parsing delimited string\n");
+        parser->token = fatal_error;
         return;
       }
 
@@ -272,8 +244,8 @@ static void next_token(struct parser_t *parser, char *input, size_t n) {
 
     case parser_inline_delimited_string_end: {
       if (parser->end_of_file) {
-        parser->state = parser_error;
-        parser->token = stop;
+        puts("Unexpected end of file while parsing delimited string");
+        parser->token = fatal_error;
         return;
       }
 
@@ -368,15 +340,17 @@ static int execute(char *program, size_t n) {
     // Parse a new command.
     next_token(&parser, program, n);
 
-    if (parser.token == stop) {
-      return 0;
-    }
+    if (parser.token == fatal_error)
+      return 1;
 
-    // empty lines
+    if (parser.token == end_of_file)
+      return 0;
+
+    // Skip over lines without commands
     if (parser.token == end_of_command)
       continue;
-
-    // Should be an identifier
+    
+    // Commands are identifiers
     if (parser.token != identifier) {
       printf("Expected a command got %d\n", parser.token);
       return 1;
@@ -403,7 +377,7 @@ static int execute(char *program, size_t n) {
       value_start = program + parser.token_start;
       value_end = program + parser.token_end;
       next_token(&parser, program, n);
-      if (parser.token != end_of_command && parser.token != stop)
+      if (parser.token != end_of_command && parser.token != end_of_file)
         return 1;
 
       // temporarily put some 0 there.
@@ -438,9 +412,6 @@ static int execute(char *program, size_t n) {
       *variable_end = old_variable_end;
       *delim_end = old_delim_end;
       *value_end = old_value_end;
-
-      if (parser.token == stop)
-        return 0;
       break;
 
     case command_prepend:
@@ -460,7 +431,7 @@ static int execute(char *program, size_t n) {
       value_start = program + parser.token_start;
       value_end = program + parser.token_end;
       next_token(&parser, program, n);
-      if (parser.token != end_of_command && parser.token != stop)
+      if (parser.token != end_of_command && parser.token != end_of_file)
         return 1;
 
       // temporarily put some 0 there.
@@ -495,9 +466,6 @@ static int execute(char *program, size_t n) {
       *variable_end = old_variable_end;
       *delim_end = old_delim_end;
       *value_end = old_value_end;
-
-      if (parser.token == stop)
-        return 0;
       break;
 
     case command_set:
@@ -512,7 +480,7 @@ static int execute(char *program, size_t n) {
       value_start = program + parser.token_start;
       value_end = program + parser.token_end;
       next_token(&parser, program, n);
-      if (parser.token != end_of_command && parser.token != stop)
+      if (parser.token != end_of_command && parser.token != end_of_file)
         return 1;
 
       old_variable_end = *variable_end;
@@ -553,7 +521,7 @@ int main(int argc, char **argv) {
   fseek(f, 0, SEEK_SET);
   char *str = malloc(fsize + 1);
   if (str == NULL) return 1;
-  size_t num_read = fread(str, 1, fsize, f);
+  long num_read = fread(str, 1, fsize, f);
   if (num_read != fsize) return 2;
   fclose(f);
   str[fsize] = 0;

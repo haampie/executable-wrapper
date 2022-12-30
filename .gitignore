@@ -1,3 +1,4 @@
-wrapper
+*.o
+executable-wrapper
 cmake
 cmake-real
