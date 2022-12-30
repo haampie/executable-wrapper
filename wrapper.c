@@ -31,6 +31,9 @@ struct parser_t {
   char closing_delimiter;
   size_t token_start;
   size_t token_end;
+  size_t heredoc_start;
+  size_t heredoc_size;
+  size_t heredoc_pos;
   size_t index;
   int end_of_file;
   token_t token;
@@ -187,6 +190,8 @@ static void next_token(struct parser_t *parser, char *input, size_t n) {
       // begin of r"(...)" delimited string
       if (c == '"') {
         parser->state = parser_delimited_string_start;
+        parser->heredoc_size = 0;
+        parser->heredoc_start = parser->index + 1;
         ++parser->index;
         continue;
       }
@@ -237,11 +242,9 @@ static void next_token(struct parser_t *parser, char *input, size_t n) {
         continue;
       }
 
-      // parse heredoc like delimited string
-      // state = parser_heredoc_like_string_start;
-      // puts("Heredoc not implemented yet");
-      parser->state = parser_error;
-      return;
+      ++parser->heredoc_size;
+      ++parser->index;
+      continue;
     }
 
     case parser_inline_delimited_string: {
@@ -254,6 +257,7 @@ static void next_token(struct parser_t *parser, char *input, size_t n) {
       // closing delimiter
       if (c == parser->closing_delimiter) {
         parser->state = parser_inline_delimited_string_end;
+        parser->heredoc_pos = 0;
         parser->token_end = parser->index;
         ++parser->index;
         continue;
@@ -270,6 +274,33 @@ static void next_token(struct parser_t *parser, char *input, size_t n) {
         break;
       }
 
+
+      if (parser->heredoc_pos < parser->heredoc_size) {
+        // Matching heredoc character first.
+        if (c == input[parser->heredoc_start + parser->heredoc_pos]) {
+          ++parser->heredoc_pos;
+          ++parser->index;
+          continue;
+        }
+
+        puts("hello");
+
+        // Mismatch! Reset heredoc pos.
+        parser->heredoc_pos = 0;
+
+        // Are we again in string closing mode
+        if (c == parser->closing_delimiter) {
+          ++parser->index;
+          continue;
+        }
+
+        // If not, it's string territory.
+        parser->state = parser_inline_delimited_string;
+        ++parser->index;
+        continue;
+      }
+
+      // Finished the heredoc
       if (c == '"') {
         parser->state = parser_token_start;
         parser->token = string;
@@ -277,7 +308,7 @@ static void next_token(struct parser_t *parser, char *input, size_t n) {
         return;
       }
 
-      // repeated closing character, maybe the next one ends the string.
+      // Repeated closing character, maybe the next one ends the string.
       if (c == parser->closing_delimiter) {
         ++parser->index;
         continue;

@@ -89,9 +89,12 @@ set r"(VARIABLE)" r"(((value)))"   # VARIABLE is set to `((value))`
 
 Apart from `r"(...)"` it also supports `r"[...]"`, `r"{...}"` and `r"<...>"`.
 
-NOTE: strings are not escaped, they're always literal.
-If a variable or value contains whitespace, quotes, and all
-of `)"`, `]"`, `}"`, `>"` you can't represent that string currently.\*
+It also supports custom heredoc-like delimiters:
+
+```
+set VARIABLE r"✌️(value)✌️" # set VARIABLE to `value`
+set DELIMITERS r"test()", ]", }", >")test" # set DELIMITERS to `)", ]", }", >"`
+```
 
 Multiline values require quoted or delimited strings:
 
@@ -101,15 +104,4 @@ value"  # VARIABLE is set to `the<newline>value`
 
 set VARIABLE r"(the
 value)"  # VARIABLE is set to `the<newline>value`
-```
-
-------
-
-\* In principle I could still implement heredoc strings to work around
-the limitation:
-
-```
-set VARIABLE r"EOS
-this is the contents
-EOS
 ```
