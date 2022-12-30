@@ -66,25 +66,32 @@ prepend <variable name> <delimiter> <value>
 
 Inline comments are supported with `# <comment>`.
 
-Variables, delimiters and values can be literal values separated by whitespace:
+Variables, delimiters and values can be (a) literal values separated by whitespace:
 
 ```
 set VARIABLE VALUE # VARIABLE is set to `VALUE`
+set VARIABLE he"llo # VARAIBLE is set to `he"llo`
 ```
 
-or quoted strings:
+or (b) quoted strings:
 
 ```
 set "VARIABLE" "VALUE" # VARIABLE is set to `VALUE`
 ```
 
-or delimited strings:
+or (c) delimited strings:
 
 ```
 set r"(VARIABLE)" r"(xyz)"         # VARIABLE is set to `xyz`
 set r"(VARIABLE)" r"(the "value")" # VARIABLE is set to `the "value"`
 set r"(VARIABLE)" r"(((value)))"   # VARIABLE is set to `((value))`
 ```
+
+Apart from `r"(...)"` it also supports `r"[...]"`, `r"{...}"` and `r"<...>"`.
+
+NOTE: strings are not escaped, they're always literal.
+If a variable or value contains whitespace, quotes, and all
+of `)"`, `]"`, `}"`, `>"` you can't represent that string currently.\*
 
 Multiline values require quoted or delimited strings:
 
@@ -94,4 +101,15 @@ value"  # VARIABLE is set to `the<newline>value`
 
 set VARIABLE r"(the
 value)"  # VARIABLE is set to `the<newline>value`
+```
+
+------
+
+\* In principle I could still implement heredoc strings to work around
+the limitation:
+
+```
+set VARIABLE r"EOS
+this is the contents
+EOS
 ```
