@@ -13,11 +13,14 @@ in a human-readable, hackable scripting language:
 
 ```
 $ cat cmake
-#!/tmp/tmp.HOMgkyakeP/wrapper
+#!/usr/local/bin/wrapper
 set FOO BAR
 prepend PATH : /add/this/path
 append CMAKE_PREFIX_PATH ; /first/path
 append CMAKE_PREFIX_PATH ; /second/path
+append CMAKE_PREFIX_PATH ; r"(/this/"path"/here)"
+append CMAKE_PREFIX_PATH ; r"hello(/third/path)hello"
+set DELIMITERS r"test()", ]", }", >")test"
 ```
 
 If you run it in a clean environment:
@@ -33,7 +36,10 @@ PATH was set to:
 /add/this/path:/usr/bin
 
 CMAKE_PREFIX_PATH was set to:
-/first/path;/second/path
+/first/path;/second/path;/this/"path"/here;/third/path
+
+DELIMITERS was set to:
+)", ]", }", >"
 
 (waiting for stdin before exiting, this gives you time to look at ps aux/top)
 ```
@@ -51,6 +57,7 @@ PATH was set to:
 /usr/bin
 
 CMAKE_PREFIX_PATH was not set
+DELIMITERS was not set
 (waiting for stdin before exiting, this gives you time to look at ps aux/top)
 ```
 
