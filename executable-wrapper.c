@@ -321,6 +321,7 @@ command_name_t parse_command(char const *start, char const *end) {
 }
 
 static int execute(char *program, size_t n) {
+  // this is very quick and dirty... to be refactored
   char *variable_start, *variable_end;
   char *delim_start, *delim_end;
   char *value_start, *value_end;
