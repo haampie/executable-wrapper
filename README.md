@@ -93,8 +93,10 @@ It also supports custom heredoc-like delimiters:
 
 ```
 set VARIABLE r"✌️(value)✌️" # set VARIABLE to `value`
-set DELIMITERS r"test()", ]", }", >")test" # set DELIMITERS to `)", ]", }", >"`
+set DELIMITERS r"test)", ]", }", >"}test" # set DELIMITERS to `)", ]", }", >"`
 ```
+
+the heredoc string can be any length and contain anything but `(`, `[`, `{` and `<`. `r"test{...}test"`
 
 Multiline values require quoted or delimited strings:
 
