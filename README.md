@@ -82,7 +82,7 @@ or delimited strings:
 
 ```
 set r"(VARIABLE)" r"(xyz)"         # VARIABLE is set to `xyz`
-set r"(VARIABLE)" r"(the "value")" # VARIABLE is set to `the "value" here`
+set r"(VARIABLE)" r"(the "value")" # VARIABLE is set to `the "value"`
 set r"(VARIABLE)" r"(((value)))"   # VARIABLE is set to `((value))`
 ```
 
