@@ -1,67 +1,35 @@
-Simple executable wrapper that sets default variables, with original names in `ps aux` / `top`.
+Simple executable wrapper for managing environment variables before execution.
 
+## Motivation
 
-## Example
+In package managers like [Spack](https://github.com/spack/spack/) it is
+convenient to replace a Python executable in environments with a wrapper that
+sets relevant variables such as `PYTHONPATH`, so that Python can immediately
+locate modules.
 
-Build example with
-```
-$ make
-```
+Similarly in build environments it's nice to be able to execute `cmake`, `gcc`
+etc with the correct variables. In particular when dealing with hermetic build
+systems that clear environment variables (and don't play nice with non-standard
+filesystem structures like Spack has) it's nice to use wrappers for executables
+of build dependencies.
 
-This gives you `cmake`, which wraps `cmake-real` using `wrapper` as interpreter, modifying some variables
-in a human-readable, hackable scripting language:
-
-```
-$ cat cmake
-#!/usr/local/bin/wrapper
-set FOO BAR
-prepend PATH : /add/this/path
-append CMAKE_PREFIX_PATH ; /first/path
-append CMAKE_PREFIX_PATH ; /second/path
-append CMAKE_PREFIX_PATH ; r"(/this/"path"/here)"
-append CMAKE_PREFIX_PATH ; r"_____(/third/path)_____"
-set DELIMITERS r"EOS[)", ]", }", >"]EOS"
-```
-
-If you run it in a clean environment:
+This project provides a very basic scripting language to manage variables,
+which can be more convenient than shell scripts:
 
 ```
-$ env -i PATH=/usr/bin ./cmake --hello --world
-Hello from cmake. Called with:
-./cmake
---hello
---world
-
-PATH was set to:
-/add/this/path:/usr/bin
-
-CMAKE_PREFIX_PATH was set to:
-/first/path;/second/path;/this/"path"/here;/third/path
-
-DELIMITERS was set to:
-)", ]", }", >"
-
-(waiting for stdin before exiting, this gives you time to look at ps aux/top)
+#!/path/to/executable-wrapper
+set-env FOO BAR
+prepend PATH : /some/path/bin
+append CMAKE_PREFIX_PATH ; /some/other/path
 ```
 
-versus running the "real" binary directly:
+## How to build
 
 ```
-$ env -i PATH=/usr/bin ./cmake-real --hello --world
-Hello from cmake. Called with:
-./cmake-real
---hello
---world
-
-PATH was set to:
-/usr/bin
-
-CMAKE_PREFIX_PATH was not set
-DELIMITERS was not set
-(waiting for stdin before exiting, this gives you time to look at ps aux/top)
+make
 ```
 
-## Env scripting language
+## Commands / syntax
 
 The following commands are supported:
 
