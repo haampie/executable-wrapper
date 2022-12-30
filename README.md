@@ -96,7 +96,7 @@ set VARIABLE r"✌️(value)✌️" # set VARIABLE to `value`
 set DELIMITERS r"test{)", ]", }", >"}test" # set DELIMITERS to `)", ]", }", >"`
 ```
 
-the heredoc string can be any length and contain anything but `(`, `[`, `{` and `<`,
+the heredoc delimiter can be any length and contain any byte but `(`, `[`, `{` and `<`,
 
 Multiline values require quoted or delimited strings:
 
