@@ -92,8 +92,8 @@ Apart from `r"(...)"` it also supports `r"[...]"`, `r"{...}"` and `r"<...>"`.
 It also supports custom heredoc-like delimiters:
 
 ```
-set VARIABLE r"✌️(value)✌️" # set VARIABLE to `value`
-set DELIMITERS r"test{)", ]", }", >"}test" # set DELIMITERS to `)", ]", }", >"`
+set VARIABLE r"✌️(value)✌️"                   # set VARIABLE to `value`
+set DELIMITERS r"test{)", ]", }", >"}test"  # set DELIMITERS to `)", ]", }", >"`
 ```
 
 the heredoc delimiter can be any length and contain any byte but `(`, `[`, `{` and `<`,
