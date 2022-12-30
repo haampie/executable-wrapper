@@ -153,6 +153,7 @@ static void next_token(struct parser_t *parser, char *input, size_t n) {
       // unexpected end of file
       if (parser->end_of_file) {
         parser->state = parser_error;
+        parser->token = stop;
         return;
       }
 
@@ -206,6 +207,7 @@ static void next_token(struct parser_t *parser, char *input, size_t n) {
       // unexpected end of file
       if (parser->end_of_file) {
         parser->state = parser_error;
+        parser->token = stop;
         return;
       }
 
@@ -251,6 +253,7 @@ static void next_token(struct parser_t *parser, char *input, size_t n) {
       // unexpected end of file
       if (parser->end_of_file) {
         parser->state = parser_error;
+        parser->token = stop;
         return;
       }
 
@@ -269,9 +272,9 @@ static void next_token(struct parser_t *parser, char *input, size_t n) {
 
     case parser_inline_delimited_string_end: {
       if (parser->end_of_file) {
-        // puts("Unexpected end of file");
         parser->state = parser_error;
-        break;
+        parser->token = stop;
+        return;
       }
 
 
