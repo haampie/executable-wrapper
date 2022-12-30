@@ -27,6 +27,7 @@ append CMAKE_PREFIX_PATH ; /some/other/path
 
 ```
 make
+make install prefix=/usr/local
 ```
 
 ## Commands / syntax

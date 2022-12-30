@@ -2,6 +2,12 @@ CFLAGS ?= -Os -Wall -Wextra -Wshadow -pedantic
 EXECUTABLE_WRAPPER_CFLAGS = -std=c99
 LDFLAGS ?=
 
+.PHONY: all install clean
+
+prefix = /usr/local
+exec_prefix = $(prefix)
+bindir = $(exec_prefix)/bin
+
 all: executable-wrapper
 
 executable-wrapper.o: executable-wrapper.c
@@ -10,19 +16,9 @@ executable-wrapper.o: executable-wrapper.c
 executable-wrapper: executable-wrapper.o
 	$(CC) $(LDFLAGS) -o $@ $<
 
-cmake: wrapper cmake-real
-	echo "#!$(CURDIR)/$<" > $@
-	echo "set FOO BAR" >> $@
-	echo "prepend PATH : /add/this/path" >> $@
-	echo "append CMAKE_PREFIX_PATH ; /first/path" >> $@
-	echo "append CMAKE_PREFIX_PATH ; /second/path" >> $@
-	echo 'append CMAKE_PREFIX_PATH ; r"(/this/"path"/here)"' >> $@
-	echo 'append CMAKE_PREFIX_PATH ; r"_____(/third/path)_____"' >> $@
-	echo 'set DELIMITERS r"EOS[)", ]", }", >"]EOS"' >> $@
-	chmod +x $@
-
-cmake-real: cmake.c
-	$(CC) -o $@ $<
+install: all
+	mkdir -p $(DESTDIR)$(bindir)
+	cp -p executable-wrapper $(DESTDIR)$(bindir)
 
 clean:
 	rm -f executable-wrapper.o executable-wrapper
