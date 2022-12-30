@@ -18,7 +18,7 @@ which can be more convenient than shell scripts:
 
 ```
 #!/path/to/executable-wrapper
-set-env FOO BAR
+set FOO BAR
 prepend PATH : /some/path/bin
 append CMAKE_PREFIX_PATH ; /some/other/path
 ```
