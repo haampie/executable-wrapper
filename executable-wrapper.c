@@ -4,7 +4,7 @@
 #include <string.h>
 #include <unistd.h>
 
-#define VERSION "0.1.0"
+#define VERSION "0.1.0-dev"
 
 typedef enum {
   lexer_token_start,
