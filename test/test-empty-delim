@@ -1,0 +1,6 @@
+#!../executable-wrapper
+set "HELLO" "aaa"
+append "HELLO" "" "bbb"
+prepend "HELLO" "" "ccc"
+# expect HELLO=cccaaabbb
+

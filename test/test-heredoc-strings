@@ -1,0 +1,7 @@
+#!../executable-wrapper
+set HELLO r"(aaa)"
+append HELLO : r"_{b_"_b}_"
+append HELLO : r"...[c.".c]..."
+append HELLO : r"xyz<"xyz">xyz"
+# expect HELLO=aaa:b_"_b:c.".c:"xyz"
+

@@ -157,7 +157,7 @@ static void next_token(struct lexer_t *lexer, char *input, size_t n) {
     case lexer_string_end: {
       // unexpected end of file
       if (lexer->end_of_file) {
-        puts("Unexpected end of file while parsing string\n");
+        fprintf(stderr, "Unexpected end of file while parsing string\n");
         lexer->token = token_fatal_error;
         return;
       }
@@ -211,7 +211,7 @@ static void next_token(struct lexer_t *lexer, char *input, size_t n) {
     case lexer_delimited_string_start: {
       // unexpected end of file
       if (lexer->end_of_file) {
-        puts("Unexpected end of file while parsing delimited string\n");
+        fprintf(stderr, "Unexpected end of file while parsing delimited string\n");
         lexer->token = token_fatal_error;
         return;
       }
@@ -233,7 +233,7 @@ static void next_token(struct lexer_t *lexer, char *input, size_t n) {
     case lexer_inline_delimited_string: {
       // unexpected end of file
       if (lexer->end_of_file) {
-        puts("Unexpected end of file while parsing delimited string\n");
+        fprintf(stderr, "Unexpected end of file while parsing delimited string\n");
         lexer->token = token_fatal_error;
         return;
       }
@@ -253,7 +253,7 @@ static void next_token(struct lexer_t *lexer, char *input, size_t n) {
 
     case lexer_inline_delimited_string_end: {
       if (lexer->end_of_file) {
-        puts("Unexpected end of file while parsing delimited string");
+        fprintf(stderr, "Unexpected end of file while parsing delimited string\n");
         lexer->token = token_fatal_error;
         return;
       }

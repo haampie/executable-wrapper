@@ -1,0 +1,5 @@
+#!../executable-wrapper
+set HELLO aaa
+append HELLO : "bbb
+prepend HELLO ; ccc
+# string not closed

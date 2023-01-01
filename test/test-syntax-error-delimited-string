@@ -1,0 +1,5 @@
+#!../executable-wrapper
+set HELLO aaa
+append HELLO : r"(bbb
+prepend HELLO ; c)cc"
+# delimited string not closed

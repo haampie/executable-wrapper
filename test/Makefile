@@ -1,16 +1,41 @@
-CFLAGS ?= -Os
+CFLAGS ?= -Os -Wall
 
-cmake: cmake-real
-	echo "#!$(CURDIR)/../executable-wrapper" > $@
-	echo "set FOO BAR" >> $@
-	echo "prepend PATH : /add/this/path" >> $@
-	echo "append CMAKE_PREFIX_PATH ; /first/path" >> $@
-	echo "append CMAKE_PREFIX_PATH ; /second/path" >> $@
-	echo 'append CMAKE_PREFIX_PATH ; r"(/this/"path"/here)"' >> $@
-	echo 'append CMAKE_PREFIX_PATH ; r"_____(/third/path)_____"' >> $@
-	echo 'set DELIMITERS r"EOS[)", ]", }", >"]EOS"' >> $@
-	chmod +x $@
+TESTS += test-basic
+TESTS += test-quotes
+TESTS += test-empty-delim
+TESTS += test-delimited-strings
+TESTS += test-heredoc-strings
+TESTS += test-syntax-error-string
+TESTS += test-syntax-error-delimited-string
 
-cmake-real: cmake.c
+.PHONY: $(TESTS)
+
+check: $(TESTS)
+
+%-real: print-hello.c
 	$(CC) $(CFLAGS) -o $@ $<
+
+test-basic: test-basic-real
+	test $$(./$@) = "ccc;aaa:bbb"
+
+test-quotes: test-quotes-real
+	test $$(./$@) = "ccc;aaa:bbb"
+
+test-empty-delim: test-empty-delim-real
+	test $$(./$@) = "cccaaabbb"
+
+test-delimited-strings: test-delimited-strings-real
+	test $$(./$@) = "aaa:bbb:ccc:ddd"
+
+test-heredoc-strings: test-heredoc-strings-real
+	test $$(./$@) = 'aaa:b_"_b:c.".c:"xyz"'
+
+test-syntax-error-string: test-syntax-error-string-real
+	! ./$@ 2> /dev/null
+
+test-syntax-error-delimited-string: test-syntax-error-delimited-string-real
+	! ./$@ 2> /dev/null
+
+clean:
+	rm -f *-real
 

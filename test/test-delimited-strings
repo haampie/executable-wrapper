@@ -1,0 +1,7 @@
+#!../executable-wrapper
+set HELLO r"(aaa)"
+append HELLO : r"{bbb}"
+append HELLO : r"[ccc]"
+append HELLO : r"<ddd>"
+# expect HELLO=aaa:bbb:ccc:ddd
+

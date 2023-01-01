@@ -24,5 +24,8 @@ install: all
 	mkdir -p $(DESTDIR)$(mandir)/man1
 	cp -p executable-wrapper.1 $(DESTDIR)$(mandir)/man1
 
+check: all
+	$(MAKE) -C test
+
 clean:
 	rm -f executable-wrapper.o executable-wrapper
