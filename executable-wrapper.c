@@ -1,3 +1,5 @@
+#define _POSIX_C_SOURCE 200112L
+
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -49,6 +51,7 @@ static void init_lexer(struct lexer_t *p) {
   p->state = lexer_token_start;
   p->index = 0;
   p->end_of_file = 0;
+  p->closing_delimiter = ')';
 }
 
 static void next_token(struct lexer_t *lexer, char *input, size_t n) {

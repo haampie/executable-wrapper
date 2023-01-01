@@ -7,7 +7,9 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      CFLAGS: -Werror -Wall -Wextra -Wshadow -pedantic
     steps:
     - uses: actions/checkout@755da8c3cf115ac066823e79a1e1788f8940201b
-    - run: make
-    - run: make check
+    - run: make -j2
+    - run: make -j2 check
