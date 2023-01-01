@@ -17,7 +17,7 @@ This project provides a very basic scripting language to manage variables,
 which can be more convenient than shell scripts:
 
 ```
-#!/path/to/executable-wrapper
+#!/usr/bin/env executable-wrapper
 set FOO BAR
 prepend PATH : /some/path/bin
 append CMAKE_PREFIX_PATH ; /some/other/path
