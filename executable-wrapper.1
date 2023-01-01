@@ -34,14 +34,20 @@ to
 .B prepend
 ]
 .I variable
-.I delim
+.I delimiter
 .I value
 -- this appends resp. prepends
 .I value
 to
 .I variable
 separated by
-.I delim
+.I delimiter
+
+.PP
+\fIvariable\fPs, \fIdelimiter\fPs and \fIvalue\fPs are strings. Strings are always raw strings, and there is no escape character.
+
+.PP
+Strings be literal (separated by whitespace), quoted with double quotes, or delimited.
 
 .SH EXAMPLES
 .PP
@@ -63,12 +69,39 @@ variables modified.
 .B
     prepend
 .I PATH : /path/to/my/bin
-.B
+.B 
     set 
 .I MY_VAR hello
-.B
+.B 
     append
 .I CMAKE_PREFIX_PATH ; /path/to/package
+
+.PP
+The following example shows the different string types:
+
+.PP
+    #!/usr/bin/env executable-wrapper
+
+.B
+    set
+.I EXAMPLE_A \(dqthis has whitespace\(dq
+.B
+    set
+.I EXAMPLE_B \(dqmultiline
+    string\(dq
+.B
+    set
+.I EXAMPLE_C r"(string containing \(dq somewhere)"
+.B
+    set
+.I EXAMPLE_D r"{string containing both \(dq and ) somewhere}"
+.B
+    set
+.I EXAMPLE_E r"EOF(string containing )\(dq somewhere)EOF"
+
+.PP
+
+In particular \fIEXAMPLE_C\fP, \fIEXAMPLE_D\fP, and \fIEXAMPLE_E\fP show how to use delimited strings. Supported brackets are \fIr"(...)"\fP, \fIr"{...}"\fP, \fIr"[...]"\fP,\fIr"<...>"\fP.
 
 .SH OPTIONS
 .IP "--version"
