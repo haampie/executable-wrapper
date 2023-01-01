@@ -16,6 +16,33 @@ executable-wrapper \- modify environment variables before running an executable
 .B executable-wrapper
 is an interpreter for a simple language that modifies environment variables. It should be used in the shebang line.
 
+.PP
+The language supports the following commands:
+
+.B set
+.I variable
+.I value
+-- this sets
+.I variable
+to
+.I value
+
+.PP
+[
+.B append
+|
+.B prepend
+]
+.I variable
+.I delim
+.I value
+-- this appends resp. prepends
+.I value
+to
+.I variable
+separated by
+.I delim
+
 .SH EXAMPLES
 .PP
 The following script stores as
