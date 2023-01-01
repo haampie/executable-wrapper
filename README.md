@@ -29,8 +29,14 @@ and replace it with a script:
 ```
 $ mv hello hello-real
 $ vim hello # write the script
+$ chmod +x hello
 $ ./hello # execute hello-real with modified variables
 ```
+
+The original `argv[0]` is preserved, which means that programs that are
+sensitive to this continue to work. For example, `clang` and `clang++` are
+typically both symlinks to `clang-15`, but executing `clang++` enables C++ mode
+-- clang does this by inspecting `argv[0]`.
 
 ## How to build
 
