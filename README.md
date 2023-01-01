@@ -23,14 +23,14 @@ prepend PATH : /some/path/bin
 append CMAKE_PREFIX_PATH ; /some/other/path
 ```
 
-Given an executable `hello`, you can simply move the executable to `hello-real`
+Given an executable `hello`, you can simply move the executable to `.hello-wrapped`
 and replace it with a script:
 
 ```
-$ mv hello hello-real
+$ mv hello .hello-wrapped
 $ vim hello # write the script
 $ chmod +x hello
-$ ./hello # execute hello-real with modified variables
+$ ./hello # execute .hello-wrapped with modified variables
 ```
 
 The original `argv[0]` is preserved, which means that programs that are

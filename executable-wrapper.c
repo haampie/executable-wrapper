@@ -441,15 +441,42 @@ static int execute(char *program, size_t n) {
       break;
 
     case command_unknown:
-      puts("Unknown commmand");
+      fprintf(stderr, "Unknown commmand\n");
       return 1;
     }
   }
 }
 
+static int original_executable(char *dst, char *current) {
+  // Given current = <path>/<name>, fill dst with <path>/.<name>-wrapped
+  int old_len = strlen(current);
+
+  // We add 9 characters (. and -wrapped), and have a trailing null.
+  if (old_len + 9 + 1 > 4096) return 1;
+
+  // Split on path seperator.
+  char *last_dir_sep = strrchr(current, '/');
+
+  int path_len = 0;
+  int file_len = old_len;
+
+  if (last_dir_sep != NULL) {
+      path_len = last_dir_sep + 1 - current;
+      file_len = old_len - path_len;
+  }
+
+  // assemble <path>.<name>-wrapped
+  memcpy(dst, current, path_len);
+  dst[path_len] = '.';
+  memcpy(dst + path_len + 1, current + path_len, file_len);
+  memcpy(dst + path_len + 1 + file_len, "-wrapped", 8);
+  dst[path_len + 1 + file_len + 8] = '\0';
+  return 0;
+}
+
 int main(int argc, char **argv) {
   if (argc < 2) {
-    puts("Provide a script");
+    fprintf(stderr, "Provide a script\n");
     return 1;
   }
 
@@ -467,11 +494,8 @@ int main(int argc, char **argv) {
   if (f == NULL)
     return 1;
 
-  // Get the real exe: [wrapper]-real
   char real_exe[4096];
-  int file_len = strlen(name);
-  memcpy(real_exe, name, file_len);
-  strcpy(real_exe + file_len, "-real");
+  if (original_executable(real_exe, name) != 0) return 1;
 
   // Read file into memory
   if (fseek(f, 0, SEEK_END) != 0) return 1;
