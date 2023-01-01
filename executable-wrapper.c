@@ -23,6 +23,13 @@ typedef enum {
   token_fatal_error,
 } token_t;
 
+typedef enum {
+  command_append,
+  command_prepend,
+  command_set,
+  command_unknown
+} command_name_t;
+
 struct lexer_t {
   state_t state;
   char closing_delimiter;
@@ -296,13 +303,6 @@ static void next_token(struct lexer_t *lexer, char *input, size_t n) {
   }
 }
 
-typedef enum {
-  command_append,
-  command_prepend,
-  command_set,
-  command_unknown
-} command_name_t;
-
 command_name_t parse_command(char const *start, char const *end) {
   size_t len = end - start;
   if (len == 6 && strncmp(start, "append", 6) == 0) {
@@ -320,21 +320,82 @@ command_name_t parse_command(char const *start, char const *end) {
   return command_unknown;
 }
 
-static int execute(char *program, size_t n) {
-  // this is very quick and dirty... to be refactored
-  char *variable_start, *variable_end;
-  char *delim_start, *delim_end;
-  char *value_start, *value_end;
-  char old_variable_end;
-  char old_delim_end;
-  char old_value_end;
-  char *old_env;
-  size_t old_len;
-  size_t delim_len;
-  size_t value_len;
-  size_t new_len;
+struct parsed_string_t {
+  char * start;
+  char * end;
+  size_t len;
+};
 
+static int next_identifier_or_string(struct lexer_t *lexer, struct parsed_string_t *str, char *program, size_t n) {
+  next_token(lexer, program, n);
+
+  if (lexer->token != token_identifier && lexer->token != token_string) return -1;
+
+  str->start = program + lexer->token_start;
+  str->end = program + lexer->token_end;
+  str->len = str->end - str->start;
+  return 0;
+}
+
+static int next_end_of_command(struct lexer_t *lexer, char *program, size_t n) {
+  next_token(lexer, program, n);
+  if (lexer->token != token_end_of_command && lexer->token != token_end_of_file)
+    return 1;
+  return 0;
+}
+
+static int run_command_set(struct parsed_string_t *variable, struct parsed_string_t *value) {
+  char var_end = *variable->end;
+  char val_end = *value->end;
+  *variable->end = 0;
+  *value->end = 0;
+  setenv(variable->start, value->start, 1);
+  *variable->end = var_end;
+  *value->end = val_end;
+  return 0;
+}
+
+static void concat_3(char *dst, char *a, size_t a_len, char *b, size_t b_len, char *c, size_t c_len) {
+  memcpy(dst, a, a_len);
+  memcpy(dst + a_len, b, b_len);
+  memcpy(dst + a_len + b_len, c, c_len);
+}
+
+static int run_command_append_or_prepend(struct parsed_string_t *variable, struct parsed_string_t *delim, struct parsed_string_t *value, int append) {
+  // temporarily C-stringify
+  char old_variable_end = *variable->end;
+  char old_delim_end = *delim->end;
+  char old_value_end = *value->end;
+  *variable->end = 0;
+  *delim->end = 0;
+  *value->end = 0;
+
+  char * old_val = getenv(variable->start);
+  if (old_val == NULL) {
+    setenv(variable->start, value->start, 1);
+  } else {
+    size_t old_len = strlen(old_val);
+    size_t new_len = old_len + delim->len + value->len;
+    char *new_val = malloc(new_len + 1); // trailing null
+    if (new_val == NULL) return 1;
+    if (append)
+      concat_3(new_val, old_val, old_len, delim->start, delim->len, value->start, value->len + 1);
+    else
+      concat_3(new_val, value->start, value->len, delim->start, delim->len, old_val, old_len + 1);
+    setenv(variable->start, new_val, 1);
+    free(new_val);
+  }
+
+  // undo c-stringification
+  *variable->end = old_variable_end;
+  *delim->end = old_delim_end;
+  *value->end = old_value_end;
+  return 0;
+}
+
+static int execute(char *program, size_t n) {
   struct lexer_t lexer;
+  struct parsed_string_t variable, delim, value;
   init_lexer(&lexer);
 
   while (1) {
@@ -362,135 +423,19 @@ static int execute(char *program, size_t n) {
         parse_command(program + lexer.token_start, program + lexer.token_end);
     switch (cmd) {
     case command_append:
-      next_token(&lexer, program, n);
-      if (lexer.token != token_identifier && lexer.token != token_string)
-        return 1;
-      variable_start = program + lexer.token_start;
-      variable_end = program + lexer.token_end;
-      next_token(&lexer, program, n);
-      if (lexer.token != token_identifier && lexer.token != token_string)
-        return 1;
-      delim_start = program + lexer.token_start;
-      delim_end = program + lexer.token_end;
-      next_token(&lexer, program, n);
-      if (lexer.token != token_identifier && lexer.token != token_string)
-        return 1;
-      value_start = program + lexer.token_start;
-      value_end = program + lexer.token_end;
-      next_token(&lexer, program, n);
-      if (lexer.token != token_end_of_command && lexer.token != token_end_of_file)
-        return 1;
-
-      // temporarily put some 0 there.
-      old_variable_end = *variable_end;
-      old_delim_end = *delim_end;
-      old_value_end = *value_end;
-
-      // c-stringify
-      *variable_end = 0;
-      *delim_end = 0;
-      *value_end = 0;
-
-      old_env = getenv(variable_start);
-      if (old_env == NULL) {
-        setenv(variable_start, value_start, 1);
-      } else {
-        old_len = strlen(old_env);
-        delim_len = delim_end - delim_start;
-        value_len = value_end - value_start;
-        new_len = old_len + delim_len + value_len;
-        char *concatenated = malloc(new_len + 1); // trailing null
-        if (concatenated == NULL) return 1;
-        memcpy(concatenated, old_env, old_len);
-        memcpy(concatenated + old_len, delim_start, delim_len);
-        memcpy(concatenated + old_len + delim_len, value_start,
-               value_len + 1); // null
-        setenv(variable_start, concatenated, 1);
-        free(concatenated);
-      }
-
-      // undo c-stringification
-      *variable_end = old_variable_end;
-      *delim_end = old_delim_end;
-      *value_end = old_value_end;
-      break;
-
     case command_prepend:
-      next_token(&lexer, program, n);
-      if (lexer.token != token_identifier && lexer.token != token_string)
-        return 1;
-      variable_start = program + lexer.token_start;
-      variable_end = program + lexer.token_end;
-      next_token(&lexer, program, n);
-      if (lexer.token != token_identifier && lexer.token != token_string)
-        return 1;
-      delim_start = program + lexer.token_start;
-      delim_end = program + lexer.token_end;
-      next_token(&lexer, program, n);
-      if (lexer.token != token_identifier && lexer.token != token_string)
-        return 1;
-      value_start = program + lexer.token_start;
-      value_end = program + lexer.token_end;
-      next_token(&lexer, program, n);
-      if (lexer.token != token_end_of_command && lexer.token != token_end_of_file)
-        return 1;
-
-      // temporarily put some 0 there.
-      old_variable_end = *variable_end;
-      old_delim_end = *delim_end;
-      old_value_end = *value_end;
-
-      // c-stringify
-      *variable_end = 0;
-      *delim_end = 0;
-      *value_end = 0;
-
-      old_env = getenv(variable_start);
-      if (old_env == NULL) {
-        setenv(variable_start, value_start, 1);
-      } else {
-        old_len = strlen(old_env);
-        delim_len = delim_end - delim_start;
-        value_len = value_end - value_start;
-        new_len = old_len + delim_len + value_len;
-        char *concatenated = malloc(new_len + 1); // trailing null
-        if (concatenated == NULL) return 1;
-        memcpy(concatenated, value_start, value_len);
-        memcpy(concatenated + value_len, delim_start, delim_len);
-        memcpy(concatenated + value_len + delim_len, old_env,
-               old_len + 1); // null
-        setenv(variable_start, concatenated, 1);
-        free(concatenated);
-      }
-
-      // undo c-stringification
-      *variable_end = old_variable_end;
-      *delim_end = old_delim_end;
-      *value_end = old_value_end;
+      if (next_identifier_or_string(&lexer, &variable, program, n) != 0) return 1;
+      if (next_identifier_or_string(&lexer, &delim, program, n) != 0) return 1;
+      if (next_identifier_or_string(&lexer, &value, program, n) != 0) return 1;
+      if (next_end_of_command(&lexer, program, n) != 0) return 1;
+      if (run_command_append_or_prepend(&variable, &delim, &value, cmd == command_append) != 0) return 1;
       break;
 
     case command_set:
-      next_token(&lexer, program, n);
-      if (lexer.token != token_identifier && lexer.token != token_string)
-        return 1;
-      variable_start = program + lexer.token_start;
-      variable_end = program + lexer.token_end;
-      next_token(&lexer, program, n);
-      if (lexer.token != token_identifier && lexer.token != token_string)
-        return 1;
-      value_start = program + lexer.token_start;
-      value_end = program + lexer.token_end;
-      next_token(&lexer, program, n);
-      if (lexer.token != token_end_of_command && lexer.token != token_end_of_file)
-        return 1;
-
-      old_variable_end = *variable_end;
-      old_value_end = *value_end;
-      *variable_end = 0;
-      *value_end = 0;
-      setenv(variable_start, value_start, 1);
-      *variable_end = old_variable_end;
-      *value_end = old_value_end;
+      if (next_identifier_or_string(&lexer, &variable, program, n) != 0) return 1;
+      if (next_identifier_or_string(&lexer, &value, program, n) != 0) return 1;
+      if (next_end_of_command(&lexer, program, n) != 0) return 1;
+      if (run_command_set(&variable, &value) != 0) return 1;
       break;
 
     case command_unknown:
@@ -517,13 +462,14 @@ int main(int argc, char **argv) {
   strcpy(real_exe + file_len, "-real");
 
   // Read file into memory
-  fseek(f, 0, SEEK_END);
-  long fsize = ftell(f);
-  fseek(f, 0, SEEK_SET);
+  if (fseek(f, 0, SEEK_END) != 0) return 1;
+  long int fsize = ftell(f);
+  if (fsize == -1) return 1;
+  if (fseek(f, 0, SEEK_SET) != 0) return 1;
   char *str = malloc(fsize + 1);
   if (str == NULL) return 1;
-  long num_read = fread(str, 1, fsize, f);
-  if (num_read != fsize) return 2;
+  size_t num_read = fread(str, 1, fsize, f);
+  if (num_read != (size_t) fsize) return 2;
   fclose(f);
   str[fsize] = 0;
 
@@ -532,8 +478,6 @@ int main(int argc, char **argv) {
     return result;
 
   int exec_result = execv(real_exe, argv + 1);
-
   printf("Could not execute %s\n", real_exe);
-
   return exec_result;
 }
