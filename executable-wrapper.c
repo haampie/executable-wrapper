@@ -448,8 +448,10 @@ static int execute(char *program, size_t n) {
 }
 
 int main(int argc, char **argv) {
-  if (argc < 2)
+  if (argc < 2) {
+    puts("Provide a script");
     return 1;
+  }
 
   // Quickly scan for --version flag
   for (int i = 1; i < argc; ++i) {
