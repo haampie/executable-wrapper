@@ -23,6 +23,15 @@ prepend PATH : /some/path/bin
 append CMAKE_PREFIX_PATH ; /some/other/path
 ```
 
+Given an executable `hello`, you can simply move the executable to `hello-real`
+and replace it with a script:
+
+```
+$ mv hello hello-real
+$ vim hello # write the script
+$ ./hello # execute hello-real with modified variables
+```
+
 ## How to build
 
 ```
