@@ -1,0 +1,13 @@
+name: test
+
+on:
+  push: 
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@755da8c3cf115ac066823e79a1e1788f8940201b
+    - run: make
+    - run: make check
