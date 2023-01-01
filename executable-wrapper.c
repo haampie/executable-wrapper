@@ -4,6 +4,8 @@
 #include <string.h>
 #include <unistd.h>
 
+#define VERSION "0.1.0"
+
 typedef enum {
   lexer_token_start,
   lexer_identifier,
@@ -448,6 +450,14 @@ static int execute(char *program, size_t n) {
 int main(int argc, char **argv) {
   if (argc < 2)
     return 1;
+
+  // Quickly scan for --version flag
+  for (int i = 1; i < argc; ++i) {
+    if (argv[i][0] == '-' && strcmp(argv[i], "--version") == 0) {
+      puts(VERSION);
+      return 0;
+    }
+  }
 
   // The wrapper file
   char *name = argv[1];
