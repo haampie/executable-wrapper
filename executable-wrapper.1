@@ -1,0 +1,51 @@
+.\" Process this file with
+.\" groff -man -Tascii foo.1
+.\"
+.TH executable-wrapper 1 "2023-01-01" Linux "User Manuals"
+.SH NAME
+executable-wrapper \- modify environment variables before running an executable
+.SH SYNOPSIS
+.B executable-wrapper 
+[
+.I --version
+]
+.I executable
+
+.SH DESCRIPTION
+.PP
+.B executable-wrapper
+is an interpreter for a simple language that modifies environment variables. It should be used in the shebang line.
+
+.SH EXAMPLES
+.PP
+The following script stores as
+.I executable
+will run
+.I executable-real
+with the
+.I PATH
+,
+.I MY_VAR
+and
+.I CMAKE_PREFIX_PATH
+variables modified.
+
+.PP
+    #!/usr/bin/env executable-wrapper
+
+.B
+    prepend
+.I PATH : /path/to/my/bin
+.B
+    set 
+.I MY_VAR hello
+.B
+    append
+.I CMAKE_PREFIX_PATH ; /path/to/package
+
+.SH OPTIONS
+.IP "--version"
+Print version info
+.SH AUTHOR
+Harmen Stoppels <me@harmenstoppels.nl>
+
