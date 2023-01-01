@@ -98,10 +98,12 @@ The following example shows the different string types:
 .B
     set
 .I EXAMPLE_E r"EOF(string containing )\(dq somewhere)EOF"
-
+.B
+    set
+.I EXAMPLE_F r"--[heredoc type of string]--"
 .PP
 
-In particular \fIEXAMPLE_C\fP, \fIEXAMPLE_D\fP, and \fIEXAMPLE_E\fP show how to use delimited strings. Supported brackets are \fIr"(...)"\fP, \fIr"{...}"\fP, \fIr"[...]"\fP,\fIr"<...>"\fP.
+In particular \fIEXAMPLE_C\fP to \fIEXAMPLE_F\fP show how to use delimited strings. Supported brackets are \fIr"(...)"\fP, \fIr"{...}"\fP, \fIr"[...]"\fP,\fIr"<...>"\fP. \fIEXAMPLE_E\fP and \fIEXAMPLE_F\fP show how to use (custom) heredoc-like delimiters.
 
 .SH OPTIONS
 .IP "--version"
